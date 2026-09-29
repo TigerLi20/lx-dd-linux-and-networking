@@ -71,6 +71,17 @@ HANDS_ON_NETWORKING_NOTEBOOKS = {
     "notebooks/21-network-names-and-service-discovery.ipynb",
     "notebooks/22-network-diagnostics-and-testing.ipynb",
 }
+NEW_FLOW_FIGURES = {
+    "notebooks/13-physical-duckiedrone-ssh-access.ipynb": {1},
+    "notebooks/14-virtual-duckiedrone-connections.ipynb": {1},
+    "notebooks/16-duckiedrone-process-inspection.ipynb": {1},
+    "notebooks/17-network-addressing-and-routing.ipynb": set(range(1, 7)),
+    "notebooks/18-network-protocols-and-quality.ipynb": {1, 2},
+    "notebooks/19-localhost-and-service-binding.ipynb": {2},
+    "notebooks/20-network-configuration-and-access-policy.ipynb": {1},
+    "notebooks/21-network-names-and-service-discovery.ipynb": {1},
+    "notebooks/22-network-diagnostics-and-testing.ipynb": {1},
+}
 CHECKPOINT_CODE_SOURCE = [
     "import sys",
     "from pathlib import Path",
@@ -244,7 +255,7 @@ def test_notebook_cells_have_consistent_metadata() -> None:
 
 
 def test_tables_and_figures_use_shared_presentation_style() -> None:
-    """Keep table and figure captions centered through shared CSS classes."""
+    """Keep shared caption styles, linked figures, and consistent arrows."""
     styled_notebooks = 0
     table_count = 0
     figure_count = 0
@@ -252,8 +263,8 @@ def test_tables_and_figures_use_shared_presentation_style() -> None:
     for notebook_path in sorted(NOTEBOOK_DIR.glob("*.ipynb")):
         notebook = json.loads(notebook_path.read_text(encoding="utf-8"))
         markdown_source = "".join(notebook["cells"][0]["source"])
-        tables = TABLE_PATTERN.findall(markdown_source)
-        figures = FIGURE_PATTERN.findall(markdown_source)
+        tables = list(TABLE_PATTERN.finditer(markdown_source))
+        figures = list(FIGURE_PATTERN.finditer(markdown_source))
 
         if tables or figures:
             styled_notebooks += 1
@@ -261,19 +272,88 @@ def test_tables_and_figures_use_shared_presentation_style() -> None:
         else:
             assert "<style>" not in markdown_source
 
-        for attributes in tables:
+        for table in tables:
+            attributes = table.group("attrs")
             assert 'class="lx-table"' in attributes
-        for attributes in figures:
+            number = re.search(r'id="table-(\d+)"', attributes)
+            assert number is not None
+            preceding_source = markdown_source[:table.start()]
+            assert (
+                f"[Table {number.group(1)}](#table-{number.group(1)})"
+                in preceding_source
+            )
+            assert not preceding_source.rstrip().endswith(":")
+        for figure in figures:
+            attributes = figure.group("attrs")
             assert 'class="lx-figure"' in attributes
+            number = re.search(r'id="figure-(\d+)"', attributes)
+            assert number is not None
+            assert (
+                f"[Figure {number.group(1)}](#figure-{number.group(1)})"
+                in markdown_source[:figure.start()]
+            )
+            pre = re.search(r"<pre\b[^>]*>(.*?)</pre>", figure.group(), re.DOTALL)
+            if pre is not None:
+                for row in pre.group(1).splitlines():
+                    if row.strip() == "v":
+                        assert row == "      v", (notebook_path.name, number.group(1))
+                    elif row.strip().startswith("|") and (
+                        notebook_path.name,
+                        number.group(1),
+                    ) not in {
+                        ("2-linux-shell-and-navigation.ipynb", "1"),
+                        ("17-network-addressing-and-routing.ipynb", "1"),
+                    }:
+                        assert row.startswith("      |"), (
+                            notebook_path.name,
+                            number.group(1),
+                        )
         for attributes in CAPTION_PATTERN.findall(markdown_source):
             assert "style=" not in attributes
 
         table_count += len(tables)
         figure_count += len(figures)
 
-    assert styled_notebooks == 10
-    assert table_count == 10
-    assert figure_count == 15
+    assert styled_notebooks == 13
+    assert table_count == 23
+    assert figure_count == 19
+
+
+def test_network_lesson_presentation_and_command_examples() -> None:
+    """Keep output names concrete, commands generic, and captions sequential."""
+    for relative_path in HANDS_ON_NETWORKING_NOTEBOOKS:
+        notebook = json.loads((ROOT / relative_path).read_text(encoding="utf-8"))
+        markdown_source = "".join(notebook["cells"][0]["source"])
+        assert re.search(r"\b(?:Amelia|ROBOT(?:_NAME|_IP)?)\b", markdown_source) is None
+
+        for tag, pattern in (("table", TABLE_PATTERN), ("figure", FIGURE_PATTERN)):
+            caption_tag = "caption" if tag == "table" else "figcaption"
+            for number, block in enumerate(pattern.finditer(markdown_source), 1):
+                assert f'id="{tag}-{number}"' in block.group("attrs")
+                assert re.search(
+                    rf"<{caption_tag}>\s*{tag.title()} {number}:",
+                    block.group(),
+                )
+                if tag == "figure" and number in NEW_FLOW_FIGURES.get(relative_path, set()):
+                    assert re.search(
+                        r'  <pre style="display:inline-block; margin:0; text-align:left;">\n'
+                        r'(?:    [^\n]*\n)+'
+                        rf'  </pre>\n  <figcaption>(?:\n    )?Figure {number}:',
+                        block.group(),
+                    )
+
+        for output in re.findall(r"(?ms)^```shell\n(.*?)^```", markdown_source):
+            assert re.search(
+                r"\b(?:DUCKIEDRONE_[A-Z]+|ROBOT(?:_NAME|_IP)?)\b",
+                output,
+            ) is None
+
+        for command in re.findall(r"(?ms)^```bash\n(.*?)^```", markdown_source):
+            assert re.search(
+                r"\b(?:amelia|vamelia|ROBOT(?:_IP|_NAME)?|192\.168\.1\.201)\b",
+                command,
+                re.IGNORECASE,
+            ) is None
 
 
 def test_numbered_notebook_references_are_individually_linked() -> None:
