@@ -3,7 +3,7 @@
     {
       "id": "hostname-and-ping-failure",
       "question": "What is the difference between hostname lookup failure and failed ping?",
-      "model_answer": "Hostname lookup failure means a name cannot be resolved to an IP address. After a successful lookup, a failed ping means no successful ICMP reply was received; it does not identify the cause.",
+      "model_answer": "Hostname lookup failure means a name cannot be resolved to an IP address. A failed ping to a verified IP address means no ICMP reply was received; it does not identify whether the device is unavailable, the path fails, or ICMP is blocked.",
       "evidence": [
         {
           "label": "Resolve names and inspect routes",

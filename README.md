@@ -10,7 +10,7 @@ Linux and networking provide the conceptual and practical foundation for working
 
 ## Intended learning outcomes
 
-After completing this learning experience, learners will be able to:
+After completing this LX, learners will be able to:
 
 1. Distinguish the Linux kernel, distributions, user space, and central processing unit (CPU) architecture before navigating a Linux filesystem. Create and safely manage files, use wildcards and searches, interpret command results, understand standard streams, redirection, pipes, variables, permissions, processes, and trusted shell scripts, and write and verify small Python and shell programs that read from and write to standard streams.
 
@@ -18,7 +18,7 @@ After completing this learning experience, learners will be able to:
 
 3. Distinguish a base-station shell, a physical Duckiedrone Secure Shell (SSH) shell, a virtual Duckiedrone shell, and a service shell. With explicit authorization, access one Duckiedrone and inspect its filesystem, processes, and running services without changing device state.
 
-## Run this learning experience
+## Run this LX
 
 Follow the Duckietown Manual's [LX General Instructions](https://docs.duckietown.com/ente/opmanual-dd24/50-learning-experiences/lx-general-procedure.html) to open this LX in a prepared environment. The notebooks provide the topic-specific activities; the prerequisites below describe the local setup.
 
