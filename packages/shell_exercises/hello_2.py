@@ -4,7 +4,7 @@
 import sys
 
 # Change only the text between the quotation marks.
-MESSAGE = "<WRITE A GREETING HERE>"
+MESSAGE = "Hello from the shell!"
 
 
 def main() -> None:

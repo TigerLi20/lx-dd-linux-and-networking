@@ -1,7 +1,7 @@
 """Print a greeting with print()."""
 
 # Change only the text between the quotation marks. `print` adds a newline.
-MESSAGE = "<WRITE A GREETING HERE>"
+MESSAGE = "Hello from the shell!"
 
 
 def main() -> None:
